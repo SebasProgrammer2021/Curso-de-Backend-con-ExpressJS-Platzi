@@ -9,6 +9,3 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 ```
 
-## Nota sobre `users.json`
-
-El archivo `users.json` (en la raíz del proyecto) contiene los datos usados por las rutas y métodos de usuarios del proyecto (por ejemplo, las respuestas para GET /users, POST /users, PUT /users, DELETE /users). Es un archivo JSON con usuarios de ejemplo que las rutas del servidor pueden consumir durante pruebas o desarrollo.
