@@ -1,15 +1,15 @@
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 
 const fs = require('fs'); //modulo para trabajar con archivos file system
 const path = require('path'); //modulo para trabajar con rutas de archivos
+const { validateUser, validateUniqueUser } = require('./validation');
 const usersFilePath = path.join(__dirname, 'users.json'); //ruta del archivo users.json, configuración para poder acceder a él desde cualquier parte del proyecto
 
 const app = express();
 // Middleware para parsear el cuerpo de las solicitudes
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3000;
 
@@ -74,6 +74,74 @@ app.get('/users', (req, res) => {
     res.json(users);
   });
 });
+
+// Validar que el ID sea único, que el nombre tenga al menos 3 caracteres y que el email sea un formato válido para crear un nuevo usuario.
+app.post('/users', (req, res) => {
+  const newUser = req.body;
+
+  fs.readFile(usersFilePath, 'utf-8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error al leer el archivo de usuarios' });
+    }
+
+    const users = JSON.parse(data);
+    const uniqueUserValidation = validateUniqueUser(newUser, users);
+    if (!uniqueUserValidation.isValid) {
+      return res.status(400).json({ error: uniqueUserValidation.error });
+    }
+    users.push(newUser);
+
+    fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), 'utf-8', (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al escribir en el archivo de usuarios' });
+      }
+      res.status(201).json({ message: 'Usuario agregado correctamente', user: newUser });
+    });
+  })
+});
+
+//actualizar un usuario existente, validando que el ID exista, que el nombre tenga al menos 3 caracteres y que el email sea un formato válido.
+app.put('/users/:id', (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  let updatedUser = req.body;
+
+  fs.readFile(usersFilePath, 'utf-8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error al leer el archivo de usuarios' });
+    }
+
+    let users = JSON.parse(data);
+
+    const existingUser = users.find(u => u.id === userId);
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Evitar cambiar el id
+    // Si el cuerpo de la solicitud incluye un id diferente, rechazar la solicitud, la funcion call Object.prototype.hasOwnProperty.call se utiliza para verificar si el objeto updatedUser tiene una propiedad 'id' y si su valor es diferente al userId extraído de la URL. Si ambas condiciones se cumplen, significa que el cliente está intentando cambiar el ID del usuario, lo cual no está permitido, por lo que se devuelve un error 400 con un mensaje explicativo.
+    if (Object.prototype.hasOwnProperty.call(updatedUser, 'id') && updatedUser.id !== userId) {
+      return res.status(400).json({ error: 'No está permitido cambiar el ID del usuario' });
+    }
+
+    // Merge: conservar id del usuario existente y aplicar cambios (usando la misma variable updatedUser)
+    updatedUser = { ...existingUser, ...updatedUser, id: existingUser.id };
+
+    // Validar el usuario resultante
+    const validation = validateUser(updatedUser);
+    if (!validation.isValid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    users = users.map(u => (u.id === userId ? updatedUser : u));
+    fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), 'utf-8', (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al escribir en el archivo de usuarios' });
+      }
+      res.json({ message: 'Usuario actualizado correctamente', user: updatedUser });
+    });
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
