@@ -142,6 +142,30 @@ app.put('/users/:id', (req, res) => {
   });
 });
 
+app.delete('/users/:id', (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+
+  fs.readFile(usersFilePath, 'utf-8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error al leer el archivo de usuarios' });
+    }
+
+    //json.parse(data) convierte la cadena JSON leída del archivo users.json en un array de objetos JavaScript (usuarios). Luego, se utiliza el método filter para crear un nuevo array que excluye al usuario con el ID especificado (userId).
+    let users = JSON.parse(data);
+    users = users.filter(user => user.id !== userId);
+
+    //json.stringify(users, null, 2) convierte el array de usuarios actualizado a una cadena JSON con formato legible (con indentación de 2 espacios) para escribirlo nuevamente en el archivo users.json. 
+    fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), 'utf-8', (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al escribir en el archivo de usuarios' });
+      }
+
+      //se envia 204 no content, indicando que la solicitud se ha procesado correctamente pero no hay contenido que devolver. Esto es apropiado para una operación de eliminación exitosa, ya que el recurso ha sido eliminado y no hay información adicional que proporcionar en la respuesta. 
+      res.status(200).json({ message: 'Usuario eliminado correctamente' });
+    });
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
