@@ -1,8 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const { PrismaClient } = require('./generated/prisma');
+const prisma = new PrismaClient();
 
 const fs = require('fs'); //modulo para trabajar con archivos file system
 const path = require('path'); //modulo para trabajar con rutas de archivos
+const LoggerMiddleware = require('./middlewares/logger'); //middleware personalizado para registrar las solicitudes entrantes
+const errorHandler = require('./middlewares/errorHandler'); //middleware personalizado para manejar errores de forma centralizada
 const { validateUser, validateUniqueUser } = require('./validation');
 const usersFilePath = path.join(__dirname, 'users.json'); //ruta del archivo users.json, configuración para poder acceder a él desde cualquier parte del proyecto
 
@@ -10,6 +14,8 @@ const app = express();
 // Middleware para parsear el cuerpo de las solicitudes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(LoggerMiddleware);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
@@ -166,6 +172,21 @@ app.delete('/users/:id', (req, res) => {
   });
 });
 
+app.get('/error', (req, res) => {
+  throw new Error('Error de prueba para el middleware de manejo de errores');
+});
+
+app.get('/db-users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+
+  } catch (error) {
+    console.error('Prisma error fetching users:', error);
+    // En desarrollo devolvemos detalles para depuración. En producción, devuelve sólo el mensaje genérico.
+    res.status(500).json({ error: 'Error al obtener los usuarios de la base de datos', details: error.message || error });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);

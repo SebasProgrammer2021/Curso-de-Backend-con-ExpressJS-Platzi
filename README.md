@@ -56,6 +56,51 @@ Si instalaste `body-parser` y no usas características avanzadas, puedes elimina
 
 (Adapta el puerto según la configuración de `app.js`.)
 
+## Conexión a PostgreSQL (Prisma)
+
+Levanta primero el servicio de Postgres si no está en ejecución:
+
+```bash
+docker-compose up -d
+```
+
+Opciones para conectarse a la base de datos MyStore (usuario: Sebas):
+
+- Desde dentro del contenedor (recomendado si no tienes psql en el host):
+
+```bash
+docker-compose exec postgres psql -U Sebas -d MyStore
+```
+
+- Desde el host (si tienes psql instalado):
+
+```bash
+psql postgresql://Sebas:admin123@localhost:5432/MyStore
+```
+
+- Alternativa: usa un cliente GUI (pgAdmin, DBeaver, TablePlus, etc.) y conecta con los mismos datos.
+
+Notas:
+
+- Asegúrate de que `DATABASE_URL` en `.env` coincide con la base de datos usada por el contenedor (ej.: `postgresql://Sebas:admin123@localhost:5432/MyStore?schema=public`).
+- Si necesitas aplicar migraciones (crear las tablas en la BD) ejecuta:
+
+```bash
+npx prisma migrate deploy
+```
+
+- O en desarrollo para sincronizar el schema sin historial de migraciones:
+
+```bash
+npx prisma db push
+```
+
+- Después de aplicar migraciones, regenera el cliente Prisma:
+
+```bash
+npx prisma generate
+```
+
 ---
 
 Para más detalles sobre decisiones de implementación, rutas y estructura revisa `app.js` y los archivos en la carpeta `docs/`.
