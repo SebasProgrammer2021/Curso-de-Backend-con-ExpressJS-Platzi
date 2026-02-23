@@ -101,6 +101,128 @@ npx prisma db push
 npx prisma generate
 ```
 
+## Configuración de Prisma v6 (paso a paso)
+
+Esta guía explica cómo configurar Prisma 6.x con PostgreSQL en este proyecto desde cero.
+
+### 1. Instalar dependencias de Prisma
+
+```bash
+npm install @prisma/client@6
+npm install --save-dev prisma@6
+```
+
+### 2. Inicializar Prisma (si aún no existe `prisma/schema.prisma`)
+
+```bash
+npx prisma init
+```
+
+Esto genera la carpeta `prisma/` con el archivo `schema.prisma` y agrega `DATABASE_URL` al `.env`.
+
+### 3. Configurar el archivo `.env`
+
+Asegúrate de que `.env` tenga la URL apuntando al contenedor Docker:
+
+```properties
+DATABASE_URL="postgresql://Sebas:admin123@localhost:5432/MyStore?schema=public"
+```
+
+### 4. Configurar `prisma/schema.prisma`
+
+El schema debe verse así para Prisma v6 (con `url` en el datasource y `output` en el generator):
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+}
+```
+
+> ⚠️ En Prisma v6 la propiedad `url` va dentro del bloque `datasource` del `schema.prisma`.
+> En Prisma v7 fue movida a `prisma.config.ts` — no mezclar ambas versiones.
+
+### 5. Levantar el contenedor de PostgreSQL
+
+```bash
+docker-compose up -d
+```
+
+Verifica que el contenedor esté en ejecución:
+
+```bash
+docker-compose ps
+```
+
+### 6. Crear y aplicar migraciones (crea las tablas en la BD)
+
+```bash
+npx prisma migrate dev --name init
+```
+
+> Usa `migrate dev` en desarrollo. Genera el historial de migraciones en `prisma/migrations/`.
+
+O si ya existen migraciones y solo quieres aplicarlas:
+
+```bash
+npx prisma migrate deploy
+```
+
+O para sincronizar el schema directamente sin historial de migraciones (rápido en dev):
+
+```bash
+npx prisma db push
+```
+
+### 7. Generar el cliente Prisma
+
+```bash
+npx prisma generate
+```
+
+Esto genera el cliente en `generated/prisma/` según el `output` configurado en el schema.
+
+### 8. Importar el cliente en `app.js`
+
+```js
+const { PrismaClient } = require("./generated/prisma");
+const prisma = new PrismaClient();
+```
+
+### 9. Probar la conexión
+
+Inicia la app y accede al endpoint que usa Prisma:
+
+```bash
+npm run dev
+```
+
+```bash
+curl http://localhost:3005/db-users
+```
+
+### Resumen de comandos Prisma v6
+
+| Comando                                  | Descripción                                    |
+| ---------------------------------------- | ---------------------------------------------- |
+| `npx prisma generate`                    | Genera el cliente JS a partir del schema       |
+| `npx prisma migrate dev --name <nombre>` | Crea y aplica una nueva migración en dev       |
+| `npx prisma migrate deploy`              | Aplica migraciones pendientes (producción/CI)  |
+| `npx prisma db push`                     | Sincroniza el schema con la BD sin migraciones |
+| `npx prisma studio`                      | Abre una UI visual para explorar la BD         |
+| `npx prisma -v`                          | Muestra versión del CLI y del cliente          |
+
 ---
 
 Para más detalles sobre decisiones de implementación, rutas y estructura revisa `app.js` y los archivos en la carpeta `docs/`.
