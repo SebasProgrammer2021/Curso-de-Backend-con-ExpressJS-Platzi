@@ -173,6 +173,14 @@ npx prisma migrate dev --name init
 
 > Usa `migrate dev` en desarrollo. Genera el historial de migraciones en `prisma/migrations/`.
 
+Cuando modificas el modelo (por ejemplo agregas campos como `password` o `role`), crea una nueva migración con un nombre descriptivo:
+
+```bash
+npx prisma migrate dev --name "update user model"
+```
+
+> Esto detecta los cambios en `schema.prisma` respecto a la última migración, genera un nuevo archivo SQL en `prisma/migrations/` y lo aplica automáticamente a la BD. El nombre debe describir el cambio realizado.
+
 O si ya existen migraciones y solo quieres aplicarlas:
 
 ```bash
