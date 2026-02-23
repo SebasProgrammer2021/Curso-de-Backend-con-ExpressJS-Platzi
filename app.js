@@ -3,11 +3,13 @@ const express = require('express');
 const { PrismaClient } = require('./generated/prisma');
 const prisma = new PrismaClient();
 
-const fs = require('fs'); //modulo para trabajar con archivos file system
-const path = require('path'); //modulo para trabajar con rutas de archivos
 const LoggerMiddleware = require('./middlewares/logger'); //middleware personalizado para registrar las solicitudes entrantes
 const errorHandler = require('./middlewares/errorHandler'); //middleware personalizado para manejar errores de forma centralizada
 const { validateUser, validateUniqueUser } = require('./validation');
+const authenticateToken = require('./middlewares/auth'); //middleware personalizado para autenticar solicitudes usando JWT
+
+const fs = require('fs'); //modulo para trabajar con archivos file system
+const path = require('path'); //modulo para trabajar con rutas de archivos
 const usersFilePath = path.join(__dirname, 'users.json'); //ruta del archivo users.json, configuración para poder acceder a él desde cualquier parte del proyecto
 
 const app = express();
@@ -188,6 +190,26 @@ app.get('/db-users', async (req, res) => {
   }
 });
 
+app.get('/protected-route', authenticateToken, (req, res) => {
+  res.json({ message: 'Acceso a ruta protegida concedido', user: req.user });
+});
+
+app.post('/register', async (req, res) => {
+  const {email, password, name} = req.boyd;
+  const hashedPassword = await bcrypt.hash(password, 10); // Hash de la contraseña con bcrypt, el número 10 es el costo de hashing, que determina cuántas veces se aplicará el algoritmo de hashing. Un valor más alto significa mayor seguridad pero también más tiempo de procesamiento.
+
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+      role: 'USER' // Asignamos un rol por defecto al nuevo usuario, en este caso 'USER'. Esto es útil para implementar control de acceso basado en roles (RBAC) en la aplicación, permitiendo diferenciar entre usuarios regulares y administradores u otros roles con permisos especiales.
+    }
+  });
+
+  res.status(201).json({ message: 'Usuario registrado correctamente', user: newUser });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
-})
+});
