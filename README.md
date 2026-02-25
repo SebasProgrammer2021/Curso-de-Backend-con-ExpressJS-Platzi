@@ -72,6 +72,34 @@ Opciones para conectarse a la base de datos MyStore (usuario: Sebas):
 docker-compose exec postgres psql -U Sebas -d MyStore
 ```
 
+conexion desde dentro del contenedor es más directa y evita problemas de redireccionamiento o puertos.
+
+Una vez dentro del contenedor puedes usar el cliente `psql` directamente:
+
+```bash
+psql -U Sebas -d MyStore
+```
+
+### Comandos PostgreSQL comunes (psql)
+
+> Referencia: [14 Comandos para administrar Postgres – librebyte.net](https://www.librebyte.net/base-de-datos/comandos-para-administrar-postgres/)
+
+| Comando                                      | Descripción                                |
+| -------------------------------------------- | ------------------------------------------ |
+| `\l`                                         | Listar todas las bases de datos            |
+| `\c nombre_bd`                               | Conectarse / seleccionar una base de datos |
+| `\dt`                                        | Listar tablas de la BD actual              |
+| `\d nombre_tabla`                            | Describir estructura de una tabla          |
+| `\du`                                        | Listar usuarios y roles                    |
+| `\?` o `\h`                                  | Obtener ayuda de comandos psql             |
+| `\q`                                         | Salir de la consola psql                   |
+| `CREATE DATABASE nombre OWNER usuario;`      | Crear una base de datos                    |
+| `DROP DATABASE nombre;`                      | Eliminar una base de datos                 |
+| `CREATE USER usuario WITH PASSWORD 'clave';` | Crear un usuario                           |
+| `ALTER USER usuario WITH SUPERUSER;`         | Dar privilegios de superusuario            |
+| `DROP USER usuario;`                         | Eliminar un usuario                        |
+| `ALTER SCHEMA public OWNER TO usuario;`      | Cambiar propietario del schema public      |
+
 - Desde el host (si tienes psql instalado):
 
 ```bash

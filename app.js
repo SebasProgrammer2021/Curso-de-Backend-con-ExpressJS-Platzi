@@ -7,6 +7,8 @@ const LoggerMiddleware = require('./middlewares/logger'); //middleware personali
 const errorHandler = require('./middlewares/errorHandler'); //middleware personalizado para manejar errores de forma centralizada
 const { validateUser, validateUniqueUser } = require('./validation');
 const authenticateToken = require('./middlewares/auth'); //middleware personalizado para autenticar solicitudes usando JWT
+const bcrypt = require('bcryptjs'); // librería para hashear contraseñas
+const jwt = require('jsonwebtoken'); //librería para generar y verificar tokens JWT
 
 const fs = require('fs'); //modulo para trabajar con archivos file system
 const path = require('path'); //modulo para trabajar con rutas de archivos
@@ -195,7 +197,7 @@ app.get('/protected-route', authenticateToken, (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const {email, password, name} = req.boyd;
+  const { email, password, name } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10); // Hash de la contraseña con bcrypt, el número 10 es el costo de hashing, que determina cuántas veces se aplicará el algoritmo de hashing. Un valor más alto significa mayor seguridad pero también más tiempo de procesamiento.
 
   const newUser = await prisma.user.create({
@@ -208,6 +210,24 @@ app.post('/register', async (req, res) => {
   });
 
   res.status(201).json({ message: 'Usuario registrado correctamente', user: newUser });
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    return res.status(404).json({ error: 'Email o contraseña incorrectos' });
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password); // La función bcrypt.compare se utiliza para comparar la contraseña proporcionada por el usuario (password) con la contraseña almacenada en la base de datos (user.password), que está hasheada. Esta función devuelve true si las contraseñas coinciden y false si no coinciden, lo que permite verificar la autenticidad de las credenciales del usuario durante el proceso de inicio de sesión.
+  if (!passwordMatch) {
+    return res.status(404).json({ error: 'Email o contraseña incorrectos' });
+  }
+
+  const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' }); // El token JWT se genera utilizando la función jwt.sign, que toma un payload (en este caso, un objeto con el userId y role del usuario), una clave secreta (process.env.JWT_SECRET) para firmar el token, y una opción de expiración (expiresIn: '1h') que indica que el token será válido por 1 hora. Este token se puede usar para autenticar solicitudes a rutas protegidas en la aplicación.
+
+  res.json({ message: 'Inicio de sesión exitoso', token });
 });
 
 app.listen(PORT, () => {
