@@ -3,10 +3,10 @@ const express = require('express');
 const { PrismaClient } = require('./generated/prisma');
 const prisma = new PrismaClient();
 
-const LoggerMiddleware = require('./middlewares/logger'); //middleware personalizado para registrar las solicitudes entrantes
-const errorHandler = require('./middlewares/errorHandler'); //middleware personalizado para manejar errores de forma centralizada
-const { validateUser, validateUniqueUser } = require('./validation');
-const authenticateToken = require('./middlewares/auth'); //middleware personalizado para autenticar solicitudes usando JWT
+const LoggerMiddleware = require('./src/middlewares/logger'); //middleware personalizado para registrar las solicitudes entrantes
+const errorHandler = require('./src/middlewares/errorHandler'); //middleware personalizado para manejar errores de forma centralizada
+const { validateUser, validateUniqueUser } = require('./src/utils/validation');
+const authenticateToken = require('./src/middlewares/auth'); //middleware personalizado para autenticar solicitudes usando JWT
 const bcrypt = require('bcryptjs'); // librería para hashear contraseñas
 const jwt = require('jsonwebtoken'); //librería para generar y verificar tokens JWT
 
@@ -192,9 +192,7 @@ app.get('/db-users', async (req, res) => {
   }
 });
 
-app.get('/protected-route', authenticateToken, (req, res) => {
-  res.json({ message: 'Acceso a ruta protegida concedido', user: req.user });
-});
+
 
 app.post('/register', async (req, res) => {
   const { email, password, name } = req.body;
