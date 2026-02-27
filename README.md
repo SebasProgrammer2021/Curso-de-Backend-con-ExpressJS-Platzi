@@ -1,164 +1,261 @@
 # Curso de Backend con ExpressJS (Platzi)
 
-Proyecto de ejemplo para el curso de Backend con ExpressJS. Contiene una API mínima que gestiona usuarios de ejemplo y archivos de configuración para desarrollo.
+Backend RESTful construido con Node.js y Express, con autenticación JWT, ORM Prisma y base de datos PostgreSQL en Docker.
 
-## Descripción
+---
 
-- Autor: Sebastián Londoño Valencia
-- Principal: `app.js`
-- Tipo del proyecto: CommonJS (ver `package.json`)
+## 📋 Descripción
 
-## Requisitos
+- **Autor:** Sebastián Londoño Valencia
+- **Entrypoint:** `src/server.js`
+- **Tipo:** CommonJS (`"type": "commonjs"`)
+- **Base de datos:** PostgreSQL (Docker) + Prisma ORM v6
 
-- Node.js (v16+ recomendado)
+### 🛠 Tecnologías usadas
+
+- 🚀 Node.js
+- ⚙️ Express
+- 🛡️ JSON Web Tokens (JWT)
+- 🐘 PostgreSQL (Docker)
+- 💠 Prisma ORM v6
+- 📦 bcryptjs para hashing
+- 🔑 dotenv para variables de entorno
+
+---
+
+## 🗂️ Estructura del proyecto
+
+```
+├── src/
+│   ├── server.js              # Punto de entrada — levanta el servidor
+│   ├── app.js                 # Configuración de Express (middlewares y rutas)
+│   ├── routes/
+│   │   ├── index.js           # Router principal
+│   │   └── auth.js            # Rutas de autenticación
+│   ├── controllers/
+│   │   └── authController.js  # Lógica de request/response
+│   ├── services/
+│   │   └── authService.js     # Lógica de negocio (register, login)
+│   ├── middlewares/
+│   │   ├── auth.js            # Verificación de token JWT
+│   │   ├── logger.js          # Logger de solicitudes
+│   │   └── errorHandler.js    # Manejo centralizado de errores
+│   └── utils/
+│       └── validation.js      # Funciones de validación
+├── prisma/
+│   ├── schema.prisma          # Modelos de BD
+│   ├── seed.js                # Script para poblar la BD
+│   └── migrations/            # Historial de migraciones SQL
+├── generated/
+│   └── prisma/                # Cliente Prisma generado
+├── docs/
+│   └── body-parser.md         # Nota sobre body-parser vs express.json
+├── docker-compose.yml         # Servicio PostgreSQL
+├── prisma.config.ts           # Configuración avanzada de Prisma
+└── .env                       # Variables de entorno (no subir al repo)
+```
+
+---
+
+## ⚙️ Requisitos
+
+- Node.js v16+
 - npm
+- Docker y Docker Compose
 
-## Instalación
+---
 
-1. Instala dependencias:
+## 🚀 Instalación y ejecución
+
+### 1. Clonar e instalar dependencias
 
 ```bash
 npm install
 ```
 
-2. Variables de entorno (opcional): crea un archivo `.env` si necesitas definir configuraciones (el proyecto incluye `dotenv`).
+### 2. Configurar variables de entorno
 
-## Scripts útiles (definidos en `package.json`)
+Crea un archivo `.env` en la raíz (puedes copiar `.env-example`):
 
-- `npm run dev` — Ejecuta `node --watch app.js` para desarrollo con recarga.
-- `npm start` — Ejecuta `node app.js`.
+```properties
+PORT=3005
+NODE_ENV=development
+DATABASE_URL="postgresql://Sebas:admin123@localhost:5432/MyStore?schema=public"
+JWT_SECRET="tu_clave_secreta_aqui"
+```
 
-## Datos de ejemplo
-
-El archivo `users.json` en la raíz del proyecto contiene los datos usados por las rutas y métodos de usuarios del proyecto (por ejemplo, respuestas para `GET /users`, `POST /users`, `PUT /users/:id`, `DELETE /users/:id`). Es un JSON con usuarios de ejemplo que las rutas del servidor pueden consumir durante pruebas o desarrollo.
-
-Contenido ejemplo (resumido):
-
-- id: 1, name: John Doe, email: johndoe2019@gmail.com
-- id: 2, name: Jenny Smith, email: jenny2025@gmail.com
-
-## Notas sobre body-parser
-
-Consulta el archivo [docs/body-parser.md](./docs/body-parser.md) para la explicación detallada sobre el uso de parsing en Express (recomendación moderna: `express.json()` y `express.urlencoded()`)
-
-Si instalaste `body-parser` y no usas características avanzadas, puedes eliminarlo para reducir dependencias.
-
-## Ejemplos rápidos (curl)
-
-- Listar usuarios:
-  curl http://localhost:3000/users
-
-- Obtener usuario por id:
-  curl http://localhost:3000/users/1
-
-- Crear usuario (JSON):
-  curl -X POST -H "Content-Type: application/json" -d '{"name":"Ana","email":"ana@example.com"}' http://localhost:3000/users
-
-(Adapta el puerto según la configuración de `app.js`.)
-
-## Conexión a PostgreSQL (Prisma)
-
-Levanta primero el servicio de Postgres si no está en ejecución:
+### 3. Levantar PostgreSQL con Docker
 
 ```bash
 docker-compose up -d
 ```
 
-Opciones para conectarse a la base de datos MyStore (usuario: Sebas):
+### 4. Aplicar migraciones y generar cliente Prisma
 
-- Desde dentro del contenedor (recomendado si no tienes psql en el host):
-
-```bash
-docker-compose exec postgres psql -U Sebas -d MyStore
-```
-
-conexion desde dentro del contenedor es más directa y evita problemas de redireccionamiento o puertos.
-
-Una vez dentro del contenedor puedes usar el cliente `psql` directamente:
-
-```bash
-psql -U Sebas -d MyStore
-```
-
-### Comandos PostgreSQL comunes (psql)
-
-> Referencia: [14 Comandos para administrar Postgres – librebyte.net](https://www.librebyte.net/base-de-datos/comandos-para-administrar-postgres/)
-
-| Comando                                      | Descripción                                |
-| -------------------------------------------- | ------------------------------------------ |
-| `\l`                                         | Listar todas las bases de datos            |
-| `\c nombre_bd`                               | Conectarse / seleccionar una base de datos |
-| `\dt`                                        | Listar tablas de la BD actual              |
-| `\d nombre_tabla`                            | Describir estructura de una tabla          |
-| `\du`                                        | Listar usuarios y roles                    |
-| `\?` o `\h`                                  | Obtener ayuda de comandos psql             |
-| `\q`                                         | Salir de la consola psql                   |
-| `CREATE DATABASE nombre OWNER usuario;`      | Crear una base de datos                    |
-| `DROP DATABASE nombre;`                      | Eliminar una base de datos                 |
-| `CREATE USER usuario WITH PASSWORD 'clave';` | Crear un usuario                           |
-| `ALTER USER usuario WITH SUPERUSER;`         | Dar privilegios de superusuario            |
-| `DROP USER usuario;`                         | Eliminar un usuario                        |
-| `ALTER SCHEMA public OWNER TO usuario;`      | Cambiar propietario del schema public      |
-
-- Desde el host (si tienes psql instalado):
-
-```bash
-psql postgresql://Sebas:admin123@localhost:5432/MyStore
-```
-
-- Alternativa: usa un cliente GUI (pgAdmin, DBeaver, TablePlus, etc.) y conecta con los mismos datos.
-
-Notas:
-
-- Asegúrate de que `DATABASE_URL` en `.env` coincide con la base de datos usada por el contenedor (ej.: `postgresql://Sebas:admin123@localhost:5432/MyStore?schema=public`).
-- Si necesitas aplicar migraciones (crear las tablas en la BD) ejecuta:
+`npx prisma migrate deploy` — Aplica todas las migraciones pendientes que están en `prisma/migrations/` a la base de datos. Úsalo siempre que configures el proyecto por primera vez o cuando tus compañeros hayan creado nuevas migraciones.
 
 ```bash
 npx prisma migrate deploy
 ```
 
-- O en desarrollo para sincronizar el schema sin historial de migraciones:
-
-```bash
-npx prisma db push
-```
-
-- Después de aplicar migraciones, regenera el cliente Prisma:
+`npx prisma generate` — Lee el `schema.prisma` y genera el cliente Prisma en `generated/prisma/`. Debes ejecutarlo cada vez que cambies el schema o después de `migrate deploy`.
 
 ```bash
 npx prisma generate
 ```
 
-## Configuración de Prisma v6 (paso a paso)
+### 5. (Opcional) Poblar la BD con datos de prueba
 
-Esta guía explica cómo configurar Prisma 6.x con PostgreSQL en este proyecto desde cero.
-
-### 1. Instalar dependencias de Prisma
+`node prisma/seed.js` — Ejecuta el script de seed que inserta usuarios de demo en la base de datos. Útil para tener datos de prueba rápidamente sin hacerlo manualmente por la API.
 
 ```bash
-npm install @prisma/client@6
-npm install --save-dev prisma@6
+node prisma/seed.js
 ```
 
-### 2. Inicializar Prisma (si aún no existe `prisma/schema.prisma`)
+### 6. Iniciar el servidor
+
+`npm run dev` — Usa `node --watch` para reiniciar automáticamente el servidor cuando detecta cambios en los archivos. Ideal para desarrollo.
 
 ```bash
-npx prisma init
+npm run dev
 ```
 
-Esto genera la carpeta `prisma/` con el archivo `schema.prisma` y agrega `DATABASE_URL` al `.env`.
+`npm start` — Inicia el servidor sin recarga automática. Recomendado para producción.
 
-### 3. Configurar el archivo `.env`
-
-Asegúrate de que `.env` tenga la URL apuntando al contenedor Docker:
-
-```properties
-DATABASE_URL="postgresql://Sebas:admin123@localhost:5432/MyStore?schema=public"
+```bash
+npm start
 ```
 
-### 4. Configurar `prisma/schema.prisma`
+---
 
-El schema debe verse así para Prisma v6 (con `url` en el datasource y `output` en el generator):
+## 📡 Endpoints disponibles
+
+### Autenticación (`/api/auth`)
+
+| Método | Ruta                        | Descripción                 | Auth   |
+| ------ | --------------------------- | --------------------------- | ------ |
+| `POST` | `/api/auth/register`        | Registrar nuevo usuario     | ❌     |
+| `POST` | `/api/auth/login`           | Iniciar sesión, retorna JWT | ❌     |
+| `GET`  | `/api/auth/protected-route` | Ruta protegida de prueba    | ✅ JWT |
+
+### Usuarios (legacy — archivo `users.json`)
+
+| Método   | Ruta         | Descripción                        |
+| -------- | ------------ | ---------------------------------- |
+| `GET`    | `/users`     | Listar todos los usuarios del JSON |
+| `POST`   | `/users`     | Crear usuario en el JSON           |
+| `PUT`    | `/users/:id` | Actualizar usuario del JSON        |
+| `DELETE` | `/users/:id` | Eliminar usuario del JSON          |
+
+### Base de datos (Prisma + PostgreSQL)
+
+| Método | Ruta        | Descripción                   |
+| ------ | ----------- | ----------------------------- |
+| `GET`  | `/db-users` | Listar usuarios de PostgreSQL |
+
+### Otros
+
+| Método | Ruta                          | Descripción                      |
+| ------ | ----------------------------- | -------------------------------- |
+| `GET`  | `/`                           | Página de bienvenida             |
+| `GET`  | `/search?termino=&categoria=` | Búsqueda por query params        |
+| `POST` | `/form`                       | Envío de formulario (urlencoded) |
+| `POST` | `/api/data`                   | Recibir datos JSON genéricos     |
+| `GET`  | `/error`                      | Ruta de prueba del errorHandler  |
+
+---
+
+## 🔐 Autenticación JWT
+
+### Registrar usuario
+
+```bash
+curl -X POST http://localhost:3005/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Juan\",\"email\":\"juan@example.com\",\"password\":\"123456\"}"
+```
+
+### Iniciar sesión
+
+```bash
+curl -X POST http://localhost:3005/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"juan@example.com\",\"password\":\"123456\"}"
+```
+
+### Usar el token en rutas protegidas
+
+```bash
+curl http://localhost:3005/api/auth/protected-route \
+  -H "Authorization: Bearer <token>"
+```
+
+---
+
+## 🐘 Base de datos PostgreSQL
+
+### Levantar contenedor
+
+`docker-compose up -d` — Levanta el contenedor de PostgreSQL en segundo plano (detached). La BD queda disponible en `localhost:5432`.
+
+```bash
+docker-compose up -d
+```
+
+`docker-compose ps` — Muestra el estado actual de los contenedores definidos en `docker-compose.yml`. Verifica que el contenedor esté `Up (healthy)`.
+
+```bash
+docker-compose ps
+```
+
+`docker-compose down` — Detiene y elimina los contenedores (los datos persisten gracias al volumen `db_data`).
+
+```bash
+docker-compose down
+```
+
+### Conectarse al contenedor
+
+`docker-compose exec postgres psql -U Sebas -d MyStore` — Abre una sesión interactiva de `psql` directamente dentro del contenedor Docker. Es la forma más directa y evita problemas de puertos o instalaciones locales.
+
+```bash
+docker-compose exec postgres psql -U Sebas -d MyStore
+```
+
+Una vez dentro del contenedor, si quieres reconectarte a otra BD:
+
+```bash
+psql -U Sebas -d MyStore
+```
+
+### Comandos psql útiles
+
+| Comando           | Descripción           |
+| ----------------- | --------------------- |
+| `\l`              | Listar bases de datos |
+| `\c nombre_bd`    | Conectarse a una BD   |
+| `\dt`             | Listar tablas         |
+| `\d nombre_tabla` | Describir tabla       |
+| `\du`             | Listar usuarios       |
+| `\q`              | Salir                 |
+
+> Referencia: [14 Comandos para administrar Postgres – librebyte.net](https://www.librebyte.net/base-de-datos/comandos-para-administrar-postgres/)
+
+### Consultar tabla User
+
+> ⚠️ La tabla se llama `"User"` con comillas dobles porque Prisma la crea con mayúscula. Sin las comillas PostgreSQL la busca en minúscula y lanza error.
+
+```sql
+SELECT * FROM "User";
+```
+
+---
+
+## 🔧 Configuración de Prisma v6 (paso a paso)
+
+> ⚠️ Este proyecto usa **Prisma v6**. En v6 la `url` va en `schema.prisma`. En v7 se mueve a `prisma.config.ts`.
+
+### Schema (`prisma/schema.prisma`)
 
 ```prisma
 generator client {
@@ -171,94 +268,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     Role
 }
 ```
 
-> ⚠️ En Prisma v6 la propiedad `url` va dentro del bloque `datasource` del `schema.prisma`.
-> En Prisma v7 fue movida a `prisma.config.ts` — no mezclar ambas versiones.
+### Comandos Prisma v6
 
-### 5. Levantar el contenedor de PostgreSQL
+| Comando                                             | Cuándo usarlo                                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `npx prisma generate`                               | Después de cambiar `schema.prisma` o al instalar por primera vez                 |
+| `npx prisma migrate dev --name init`                | Primera vez que creas las tablas en desarrollo                                   |
+| `npx prisma migrate dev --name "update user model"` | Cada vez que modificas un modelo (agregar campo, cambiar tipo, etc.)             |
+| `npx prisma migrate deploy`                         | Aplica migraciones pendientes (primer setup o CI/CD)                             |
+| `npx prisma db push`                                | Sincroniza schema con la BD sin generar historial (solo para prototipado rápido) |
+| `npx prisma studio`                                 | Abre UI visual en `http://localhost:5555` para ver y editar datos                |
+| `npx prisma -v`                                     | Verifica versión del CLI y del cliente instalados                                |
 
-```bash
-docker-compose up -d
-```
-
-Verifica que el contenedor esté en ejecución:
-
-```bash
-docker-compose ps
-```
-
-### 6. Crear y aplicar migraciones (crea las tablas en la BD)
-
-```bash
-npx prisma migrate dev --name init
-```
-
-> Usa `migrate dev` en desarrollo. Genera el historial de migraciones en `prisma/migrations/`.
-
-Cuando modificas el modelo (por ejemplo agregas campos como `password` o `role`), crea una nueva migración con un nombre descriptivo:
-
-```bash
-npx prisma migrate dev --name "update user model"
-```
-
-> Esto detecta los cambios en `schema.prisma` respecto a la última migración, genera un nuevo archivo SQL en `prisma/migrations/` y lo aplica automáticamente a la BD. El nombre debe describir el cambio realizado.
-
-O si ya existen migraciones y solo quieres aplicarlas:
-
-```bash
-npx prisma migrate deploy
-```
-
-O para sincronizar el schema directamente sin historial de migraciones (rápido en dev):
-
-```bash
-npx prisma db push
-```
-
-### 7. Generar el cliente Prisma
-
-```bash
-npx prisma generate
-```
-
-Esto genera el cliente en `generated/prisma/` según el `output` configurado en el schema.
-
-### 8. Importar el cliente en `app.js`
+### Importar el cliente en el código
 
 ```js
-const { PrismaClient } = require("./generated/prisma");
+const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 ```
 
-### 9. Probar la conexión
+---
 
-Inicia la app y accede al endpoint que usa Prisma:
+## 📦 Dependencias principales
 
-```bash
-npm run dev
-```
-
-```bash
-curl http://localhost:3005/db-users
-```
-
-### Resumen de comandos Prisma v6
-
-| Comando                                  | Descripción                                    |
-| ---------------------------------------- | ---------------------------------------------- |
-| `npx prisma generate`                    | Genera el cliente JS a partir del schema       |
-| `npx prisma migrate dev --name <nombre>` | Crea y aplica una nueva migración en dev       |
-| `npx prisma migrate deploy`              | Aplica migraciones pendientes (producción/CI)  |
-| `npx prisma db push`                     | Sincroniza el schema con la BD sin migraciones |
-| `npx prisma studio`                      | Abre una UI visual para explorar la BD         |
-| `npx prisma -v`                          | Muestra versión del CLI y del cliente          |
+| Paquete          | Uso                              |
+| ---------------- | -------------------------------- |
+| `express`        | Framework HTTP                   |
+| `@prisma/client` | ORM cliente                      |
+| `prisma`         | CLI de migraciones (devDep)      |
+| `bcryptjs`       | Hash de contraseñas              |
+| `jsonwebtoken`   | Generación y verificación de JWT |
+| `dotenv`         | Variables de entorno             |
+| `pg`             | Driver PostgreSQL                |
 
 ---
 
-Para más detalles sobre decisiones de implementación, rutas y estructura revisa `app.js` y los archivos en la carpeta `docs/`.
+## 📝 Notas
+
+- Consulta [`docs/body-parser.md`](./docs/body-parser.md) para más información sobre el parsing de cuerpos en Express.
+- El archivo `users.json` en la raíz es un legado de las primeras versiones del proyecto (sin BD).
+- En producción, cambia `JWT_SECRET` por una clave segura y no la subas al repositorio.
