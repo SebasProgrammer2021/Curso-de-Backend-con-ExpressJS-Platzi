@@ -294,6 +294,32 @@ model User {
 | `npx prisma studio`                                 | Abre UI visual en `http://localhost:5555` para ver y editar datos                |
 | `npx prisma -v`                                     | Verifica versión del CLI y del cliente instalados                                |
 
+### Despliegue de la base de datos (producción)
+
+Cuando publiques la aplicación en producción (o en tu pipeline de CI), ejecuta los siguientes pasos en el servidor/entorno de despliegue antes de iniciar la aplicación:
+
+1. Aplica las migraciones pendientes a la base de datos:
+
+```bash
+npx prisma migrate deploy
+```
+
+2. Genera el cliente Prisma para que el código pueda importarlo:
+
+```bash
+npx prisma generate
+```
+
+3. (Opcional) Si necesitas recuperar el esquema actual desde una base de datos existente —por ejemplo, para inspeccionar la estructura o al conectarte a una BD externa— puedes traer el schema con:
+
+```bash
+npx prisma db pull
+```
+
+Notas:
+- El orden recomendado es primero aplicar migraciones (`migrate deploy`) y luego generar el cliente (`prisma generate`).
+- `prisma db pull` no aplica migraciones; solo sincroniza `schema.prisma` desde la BD existente y puede sobrescribir cambios locales, úsalo con precaución.
+
 ### Importar el cliente en el código
 
 ```js
